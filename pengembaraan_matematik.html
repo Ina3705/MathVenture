@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengembaraan Matematik: Kuasa Dua & Punca Kuasa Dua</title>
+    <!-- Tailwind CSS untuk Rekabentuk UI Moden -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Fredoka & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Fredoka', 'Inter', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        /* Animasi tersuai */
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5)); }
+            50% { transform: scale(1.05); filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.8)); }
+        }
+        .animate-pulse-glow {
+            animation: pulseGlow 2s infinite ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col justify-between overflow-x-hidden relative">
+
+    <!-- BAR HEADER UTAMA -->
+    <header id="gameHeader" class="hidden relative z-20 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 p-3 sm:p-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 p-2.5 rounded-2xl shadow-inner flex items-center justify-center">
+                <i class="fa-solid fa-robot text-xl text-yellow-300"></i>
+            </div>
+            <div>
+                <h1 id="levelTitle" class="text-base sm:text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-amber-500">
+                    Map 1: Hutan Kuasa Dua
+                </h1>
+                <div class="flex items-center space-x-2">
+                    <span id="difficultyBadge" class="text-[10px] sm:text-xs bg-emerald-600/80 px-2.5 py-0.5 rounded-full inline-block font-semibold">MUDAH</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- NYAWA, MARKAH & MUZIK -->
+        <div class="flex items-center space-x-3 sm:space-x-5">
+            <!-- Pilihan Muzik/Audio -->
+            <button id="toggleAudioBtn" onclick="toggleBGM()" class="bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl border border-slate-700 text-yellow-400 transition active:scale-95">
+                <i id="bgmIcon" class="fa-solid fa-music"></i>
+            </button>
+
+            <!-- Nyawa -->
+            <div class="flex items-center space-x-1 bg-slate-800/80 px-3 py-1.5 rounded-xl border border-slate-700">
+                <span class="text-xs text-slate-400 font-semibold mr-1 hidden sm:inline">Nyawa:</span>
+                <div id="heartsContainer" class="flex space-x-1 text-red-500 text-sm sm:text-base">
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                    <i class="fa-solid fa-heart"></i>
+                </div>
+            </div>
+
+            <!-- Markah -->
+            <div class="bg-slate-800/80 px-3.5 py-1.5 rounded-xl border border-slate-700 flex items-center space-x-2">
+                <i class="fa-solid fa-star text-yellow-400 text-sm"></i>
+                <span id="scoreText" class="font-bold text-sm sm:text-base text-yellow-300">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- KAWASAN KANDUNGAN UTAMA (CANVAS PETA & OVERLAY UI) -->
+    <main class="relative flex-1 flex flex-col justify-center items-center w-full max-w-6xl mx-auto p-2 sm:p-4 overflow-hidden">
+        
+        <!-- SKRIN MENU UTAMA -->
+        <div id="mainMenu" class="absolute inset-0 z-30 flex flex-col justify-center items-center p-4 bg-slate-950/95 backdrop-blur-md">
+            <div class="text-center max-w-lg w-full bg-slate-900/90 border-2 border-indigo-500/30 p-6 sm:p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+                <div class="absolute -top-12 -right-12 w-32 h-32 bg-indigo-500/10 rounded-full blur-2xl"></div>
+                <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl"></div>
+                
+                <div class="mb-4 inline-block bg-indigo-600/30 p-4 rounded-3xl animate-pulse-glow">
+                    <i class="fa-solid fa-square-root-variable text-5xl text-yellow-400"></i>
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-amber-400 to-orange-500 mb-2">
+                    PENGEMBARAAN MATEMATIK
+                </h1>
+                <p class="text-slate-400 text-sm sm:text-base mb-6 font-medium">
+                    Kuasai Kuasa Dua ($x^2$) & Punca Kuasa Dua ($\sqrt{x}$) dalam kembara 5 Alam!
+                </p>
+
+                <!-- PILIHAN KESUKARAN -->
+                <div class="mb-6">
+                    <label class="block text-slate-300 font-semibold mb-3 text-sm">Pilih Tahap Kesukaran:</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button onclick="selectDifficulty('easy')" id="btnEasy" class="diff-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-3 rounded-xl border-2 border-emerald-400 shadow-md transition active:scale-95 text-xs sm:text-sm">
+                            <i class="fa-solid fa-leaf mb-1 block"></i> Mudah
+                        </button>
+                        <button onclick="selectDifficulty('medium')" id="btnMedium" class="diff-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl border-2 border-slate-700 shadow-md transition active:scale-95 text-xs sm:text-sm">
+                            <i class="fa-solid fa-fire mb-1 block"></i> Sederhana
+                        </button>
+                        <button onclick="selectDifficulty('hard')" id="btnHard" class="diff-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl border-2 border-slate-700 shadow-md transition active:scale-95 text-xs sm:text-sm">
+                            <i class="fa-solid fa-dragon mb-1 block"></i> Sukar
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="startGame()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-slate-950 font-extrabold py-4 px-6 rounded-2xl shadow-lg border-b-4 border-orange-700 transition active:scale-95 text-lg sm:text-xl flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-play"></i>
+                    <span>MULA PENGEMBARAAN</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- CANVAS PERMAINAN (PETA ANIMASI 2D) -->
+        <div class="relative w-full h-[65vh] sm:h-[72vh] bg-slate-900 rounded-3xl border-2 border-slate-800 shadow-2xl overflow-hidden">
+            <canvas id="gameCanvas"></canvas>
+            
+            <!-- HINT / PERTOLONGAN BUTTONS -->
+            <div id="helpButtons" class="absolute bottom-4 left-4 right-4 flex justify-between items-center pointer-events-none">
+                <button onclick="useCalculatorHint()" class="pointer-events-auto bg-slate-900/90 hover:bg-slate-800 border-2 border-indigo-500/50 text-indigo-300 font-bold py-2.5 px-4 rounded-2xl shadow-xl transition active:scale-95 flex items-center space-x-2 text-xs sm:text-sm backdrop-blur-md">
+                    <i class="fa-solid fa-calculator text-yellow-400"></i>
+                    <span>Kalkulator Ajaib</span>
+                </button>
+
+                <button onclick="useAskFriendHint()" id="btnAskFriend" class="pointer-events-auto bg-slate-900/90 hover:bg-slate-800 border-2 border-amber-500/50 text-amber-300 font-bold py-2.5 px-4 rounded-2xl shadow-xl transition active:scale-95 flex items-center space-x-2 text-xs sm:text-sm backdrop-blur-md">
+                    <i class="fa-solid fa-user-group text-amber-400"></i>
+                    <span>Tanya Rakan (<span id="hintCount">2</span>)</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL SOALAN MATH (POPUP QUIZ) -->
+        <div id="quizModal" class="hidden absolute inset-0 z-40 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div class="bg-slate-900 border-2 border-indigo-500/40 p-6 sm:p-8 rounded-3xl max-w-lg w-full shadow-2xl relative text-center">
+                
+                <div class="flex justify-between items-center mb-4">
+                    <span id="quizNodeName" class="text-xs sm:text-sm font-bold text-indigo-400 bg-indigo-950/80 px-3 py-1 rounded-full border border-indigo-800">
+                        Map 1 - Checkpoint 1/4
+                    </span>
+                    <span id="quizQuestionCount" class="text-xs font-bold text-amber-400 bg-amber-950/80 px-3 py-1 rounded-full border border-amber-800">
+                        Soalan 1/3
+                    </span>
+                </div>
+
+                <div class="my-6">
+                    <div class="text-slate-400 text-xs sm:text-sm mb-2 font-medium">Selesaikan soalan berikut:</div>
+                    <div id="questionText" class="text-2xl sm:text-4xl font-extrabold text-yellow-300 tracking-wide bg-slate-950/70 py-4 px-6 rounded-2xl border border-slate-800 shadow-inner flex items-center justify-center space-x-3">
+                        <!-- Text soalan dijana melalui JS -->
+                    </div>
+                </div>
+
+                <!-- PILIHAN JAWAPAN -->
+                <div id="optionsContainer" class="grid grid-cols-2 gap-3 sm:gap-4 my-4">
+                    <!-- Dynamic Answer Buttons -->
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL KALKULATOR MINI -->
+        <div id="calcModal" class="hidden absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+            <div class="bg-slate-900 border-2 border-slate-700 p-5 rounded-3xl max-w-xs w-full shadow-2xl relative">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="font-bold text-yellow-400 flex items-center text-sm">
+                        <i class="fa-solid fa-calculator mr-2"></i> Kalkulator Pengembara
+                    </h3>
+                    <button onclick="closeCalculator()" class="text-slate-400 hover:text-white p-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <input id="calcDisplay" type="text" readonly class="w-full bg-slate-950 text-right text-xl font-mono p-3 rounded-xl border border-slate-800 text-emerald-400 mb-3 shadow-inner" value="0">
+                <div class="grid grid-cols-4 gap-2 text-sm font-bold">
+                    <button onclick="calcInput('C')" class="bg-red-600/80 hover:bg-red-500 py-2.5 rounded-xl text-white">C</button>
+                    <button onclick="calcInput('√')" class="bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl text-white">√</button>
+                    <button onclick="calcInput('^2')" class="bg-indigo-600 hover:bg-indigo-500 py-2.5 rounded-xl text-white">x²</button>
+                    <button onclick="calcInput('/')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-amber-400">÷</button>
+                    
+                    <button onclick="calcInput('7')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">7</button>
+                    <button onclick="calcInput('8')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">8</button>
+                    <button onclick="calcInput('9')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">9</button>
+                    <button onclick="calcInput('*')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-amber-400">×</button>
+                    
+                    <button onclick="calcInput('4')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">4</button>
+                    <button onclick="calcInput('5')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">5</button>
+                    <button onclick="calcInput('6')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">6</button>
+                    <button onclick="calcInput('-')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-amber-400">-</button>
+                    
+                    <button onclick="calcInput('1')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">1</button>
+                    <button onclick="calcInput('2')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">2</button>
+                    <button onclick="calcInput('3')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">3</button>
+                    <button onclick="calcInput('+')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-amber-400">+</button>
+                    
+                    <button onclick="calcInput('0')" class="col-span-2 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">0</button>
+                    <button onclick="calcInput('.')" class="bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl text-white">.</button>
+                    <button onclick="calcInput('=')" class="bg-emerald-600 hover:bg-emerald-500 py-2.5 rounded-xl text-white">=</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL PILIHAN LEVEL SELESAI (SAMBUNG ATAU TAMAT) -->
+        <div id="levelCompleteModal" class="hidden absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-md">
+            <div class="bg-slate-900 border-2 border-emerald-500/50 p-6 sm:p-8 rounded-3xl max-w-md w-full shadow-2xl text-center">
+                <div class="w-20 h-20 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40 animate-bounce">
+                    <i class="fa-solid fa-trophy text-4xl"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-200 mb-2">
+                    TAHNIAH! MAP SELESAI!
+                </h2>
+                <p class="text-slate-300 text-sm mb-6">
+                    Anda telah berjaya menyelesaikan kesemua 4 Checkpoint di <span id="completedNodeName" class="font-bold text-yellow-300">Map 1</span>!
+                </p>
+
+                <div class="space-y-3">
+                    <button onclick="continueToNextLevel()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-bold py-3.5 px-6 rounded-2xl shadow-lg transition active:scale-95 text-base flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-[#fa-arrow-right] fa-arrow-right"></i>
+                        <span>SAMBUNG KE LEVEL SELETERUSNYA</span>
+                    </button>
+                    <button onclick="finishJourneyNow()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 font-bold py-3.5 px-6 rounded-2xl shadow-md transition active:scale-95 text-base">
+                        Tamatkan Pengembaraan Di Sini
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL GAME OVER / VICTORY -->
+        <div id="endGameModal" class="hidden absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/95 backdrop-blur-md">
+            <div class="bg-slate-900 border-2 border-slate-800 p-6 sm:p-8 rounded-3xl max-w-md w-full shadow-2xl text-center">
+                <div id="endGameIcon" class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <!-- Icon dijana melalui JS -->
+                </div>
+                <h2 id="endGameTitle" class="text-3xl font-extrabold mb-2">
+                    <!-- Tajuk dijana melalui JS -->
+                </h2>
+                <p id="endGameDesc" class="text-slate-400 text-sm mb-6">
+                    <!-- Penerangan dijana melalui JS -->
+                </p>
+
+                <div class="bg-slate-950/80 p-4 rounded-2xl border border-slate-800 mb-6 flex justify-around">
+                    <div>
+                        <div class="text-xs text-slate-500 font-semibold">JUMLAH MARKAH</div>
+                        <div id="finalScore" class="text-2xl font-bold text-yellow-400">0</div>
+                    </div>
+                </div>
+
+                <button onclick="returnToMainMenu()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transition active:scale-95 text-base">
+                    Kembali ke Menu Utama
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER HAK CIPTA -->
+    <footer class="relative z-20 text-center py-2 text-xs text-slate-500 font-medium">
+        Pengembaraan Matematik &copy; 2026 - Kuasa Dua & Punca Kuasa Dua
+    </footer>
+
+    <!-- SKRIP UTAMA PERMAINAN -->
+    <script>
+        /* --- KAWALAN UTAMA & PEMBALIHARAN STATE --- */
+        let canvas = document.getElementById('gameCanvas');
+        let ctx = canvas.getContext('2d');
+
+        let gameState = 'MENU'; // MENU, MAP_WALKING, QUIZ, LEVEL_COMPLETE, GAME_OVER
+        let selectedDifficulty = 'easy';
+        let lives = 3;
+        let score = 0;
+        let currentLevelIndex = 0; // Map 0 hingga 4
+        let currentQuestionInNode = 0; // Checkpoint 0 hingga 3
+        let hintsRemaining = 2;
+        let bgmEnabled = true;
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        /* --- SENARAI PETA / NODE PENGEMBARAAN & REKABENTUK LATAR BELAKANG --- */
+        const mapNodes = [
+            { id: 0, name: 'Hutan Kuasa Dua', icon: 'fa-tree', xRatio: 0.12, yRatio: 0.75, color: '#10b981', bgType: 'forest' },
+            { id: 1, name: 'Gua Punca Kuasa', icon: 'fa-mountain', xRatio: 0.35, yRatio: 0.35, color: '#f59e0b', bgType: 'cave' },
+            { id: 2, name: 'Sungai Eksponen', icon: 'fa-water', xRatio: 0.55, yRatio: 0.70, color: '#06b6d4', bgType: 'river' },
+            { id: 3, name: 'Gunung Pekali', icon: 'fa-volcano', xRatio: 0.75, yRatio: 0.30, color: '#ec4899', bgType: 'volcano' },
+            { id: 4, name: 'Istana Kuasa', icon: 'fa-chess-knight', xRatio: 0.90, yRatio: 0.65, color: '#8b5cf6', bgType: 'castle' }
+        ];
+
+        /* --- KARAKTER ROBOT ANIMASI --- */
+        const hero = {
+            x: 0,
+            y: 0,
+            targetX: 0,
+            targetY: 0,
+            speed: 0.015, // Kecepatan pergerakan lerp animasi robot
+            progress: 0, 
+            currentNode: 0,
+            targetNode: 0,
+            isMoving: false,
+            bounceOffset: 0
+        };
+
+        // Sub-checkpoint status dalam map semasa (1 Map = 4 Checkpoint, Setiap Checkpoint = 3 Soalan)
+        let questionsInCurrentCheckpoint = 0;
+        const totalQuestionsPerCheckpoint = 3;
+        const totalCheckpointsPerMap = 4;
+
+        let currentQuestionObj = null;
+
+        /* --- WEBAUDIO SYNTHESIZER (MUZIK & BUNYI CHIPTUNE 8-BIT) --- */
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) initAudio();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start(now);
+                osc.stop(now + 0.08);
+            } else if (type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+                osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                osc.start(now);
+                osc.stop(now + 0.35);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.setValueAtTime(160, now + 0.15);
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+        }
+
+        /* PERMAINAN MELODI BGM CHIPTUNE (WEB AUDIO SYNTH) */
+        const melodyNotes = [
+            261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 349.23,
+            440.00, 587.33, 440.00, 349.23, 329.63, 392.00, 523.25, 659.25
+        ];
+        let noteIndex = 0;
+
+        function startBGM() {
+            if (!bgmEnabled) return;
+            initAudio();
+            if (bgmInterval) clearInterval(bgmInterval);
+
+            bgmInterval = setInterval(() => {
+                if (!bgmEnabled || !audioCtx || gameState === 'MENU') return;
+                
+                try {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(melodyNotes[noteIndex], audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.03, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.22);
+
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.23);
+
+                    noteIndex = (noteIndex + 1) % melodyNotes.length;
+                } catch(e) {}
+            }, 250);
+        }
+
+        function toggleBGM() {
+            bgmEnabled = !bgmEnabled;
+            const icon = document.getElementById('bgmIcon');
+            if (bgmEnabled) {
+                icon.className = 'fa-solid fa-music text-yellow-400';
+                startBGM();
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                if (bgmInterval) clearInterval(bgmInterval);
+            }
+        }
+
+        /* --- PENJANA SOALAN: KUASA DUA & PUNCA KUASA DUA --- */
+        function generateMathQuestion() {
+            let questionStr = "";
+            let correctAns = 0;
+            let type = Math.floor(Math.random() * 3); // 0: Kuasa Dua, 1: Punca Kuasa Dua, 2: Operasi Campuran
+
+            if (selectedDifficulty === 'easy') {
+                if (type === 0) {
+                    // Kuasa Dua Asas (1-10)
+                    let num = Math.floor(Math.random() * 9) + 2; // 2 to 10
+                    questionStr = `${num}²`;
+                    correctAns = num * num;
+                } else {
+                    // Punca Kuasa Dua Asas (4-100)
+                    let num = Math.floor(Math.random() * 9) + 2;
+                    let square = num * num;
+                    questionStr = `√${square}`;
+                    correctAns = num;
+                }
+            } else if (selectedDifficulty === 'medium') {
+                if (type === 0) {
+                    // Kuasa Dua 11-20
+                    let num = Math.floor(Math.random() * 10) + 11;
+                    questionStr = `${num}²`;
+                    correctAns = num * num;
+                } else if (type === 1) {
+                    // Punca Kuasa 121-400
+                    let num = Math.floor(Math.random() * 10) + 11;
+                    questionStr = `√${num * num}`;
+                    correctAns = num;
+                } else {
+                    // Penambahan/Penolakan Kuasa Dua & Punca
+                    let a = Math.floor(Math.random() * 6) + 2; // 2-7
+                    let bNum = Math.floor(Math.random() * 6) + 2;
+                    let b = bNum * bNum;
+                    questionStr = `${a}² + √${b}`;
+                    correctAns = (a * a) + bNum;
+                }
+            } else { // Hard
+                if (type === 0) {
+                    // Operasi Berganda: (√x + y²)
+                    let aNum = Math.floor(Math.random() * 8) + 3;
+                    let a = aNum * aNum;
+                    let b = Math.floor(Math.random() * 6) + 3;
+                    questionStr = `√${a} + ${b}²`;
+                    correctAns = aNum + (b * b);
+                } else if (type === 1) {
+                    // Persamaan Ringkas: x² - y = z
+                    let x = Math.floor(Math.random() * 8) + 4;
+                    let y = Math.floor(Math.random() * 15) + 5;
+                    questionStr = `${x}² - ${y}`;
+                    correctAns = (x * x) - y;
+                } else {
+                    // Operasi Darab Punca: √a × √b
+                    let aNum = Math.floor(Math.random() * 5) + 2;
+                    let bNum = Math.floor(Math.random() * 5) + 2;
+                    questionStr = `√${aNum * aNum} × √${bNum * bNum}`;
+                    correctAns = aNum * bNum;
+                }
+            }
+
+            // Jana pilihan jawapan (1 betul, 3 keliru)
+            let options = [correctAns];
+            while (options.length < 4) {
+                let offset = (Math.floor(Math.random() * 7) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                let wrong = correctAns + offset;
+                if (wrong > 0 && !options.includes(wrong)) {
+                    options.push(wrong);
+                }
+            }
+            // Rawakkan Pilihan Jawapan
+            options.sort(() => Math.random() - 0.5);
+
+            return { question: questionStr, answer: correctAns, options: options };
+        }
+
+        /* --- KAWALAN PERMAINAN (START, MAP & QUIZ) --- */
+        function selectDifficulty(diff) {
+            playSound('click');
+            selectedDifficulty = diff;
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.className = "diff-btn bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 px-3 rounded-xl border-2 border-slate-700 shadow-md transition active:scale-95 text-xs sm:text-sm";
+            });
+
+            if (diff === 'easy') {
+                document.getElementById('btnEasy').className = "diff-btn bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-3 rounded-xl border-2 border-emerald-400 shadow-md transition active:scale-95 text-xs sm:text-sm";
+            } else if (diff === 'medium') {
+                document.getElementById('btnMedium').className = "diff-btn bg-amber-600 hover:bg-amber-500 text-white font-bold py-2.5 px-3 rounded-xl border-2 border-amber-400 shadow-md transition active:scale-95 text-xs sm:text-sm";
+            } else {
+                document.getElementById('btnHard').className = "diff-btn bg-rose-600 hover:bg-rose-500 text-white font-bold py-2.5 px-3 rounded-xl border-2 border-rose-400 shadow-md transition active:scale-95 text-xs sm:text-sm";
+            }
+        }
+
+        function startGame() {
+            playSound('click');
+            if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+            document.getElementById('mainMenu').classList.add('hidden');
+            document.getElementById('gameHeader').classList.remove('hidden');
+
+            // Reset status
+            lives = 3;
+            score = 0;
+            currentLevelIndex = 0;
+            currentQuestionInNode = 0; // Checkpoint 0 hingga 3
+            questionsInCurrentCheckpoint = 0;
+            hintsRemaining = 2;
+            updateHeartsUI();
+            document.getElementById('scoreText').innerText = score;
+            document.getElementById('hintCount').innerText = hintsRemaining;
+            
+            // Set lencana kesukaran
+            const diffBadge = document.getElementById('difficultyBadge');
+            if (selectedDifficulty === 'easy') {
+                diffBadge.innerText = 'MUDAH';
+                diffBadge.className = 'text-[10px] sm:text-xs bg-emerald-600/80 px-2.5 py-0.5 rounded-full inline-block font-semibold';
+            } else if (selectedDifficulty === 'medium') {
+                diffBadge.innerText = 'SEDERHANA';
+                diffBadge.className = 'text-[10px] sm:text-xs bg-amber-600/80 px-2.5 py-0.5 rounded-full inline-block font-semibold';
+            } else {
+                diffBadge.innerText = 'SUKAR';
+                diffBadge.className = 'text-[10px] sm:text-xs bg-rose-600/80 px-2.5 py-0.5 rounded-full inline-block font-semibold';
+            }
+
+            resizeCanvas();
+
+            // Mulakan BGM Melodi
+            if (bgmEnabled) startBGM();
+
+            // Set kedudukan hero awal
+            hero.currentNode = 0;
+            hero.targetNode = 0;
+            hero.isMoving = false;
+            hero.x = mapNodes[0].xRatio * canvas.width;
+            hero.y = mapNodes[0].yRatio * canvas.height;
+
+            gameState = 'MAP_WALKING';
+            
+            // Tampilkan soalan pertama di Checkpoint 1
+            setTimeout(() => {
+                showQuizForCurrentNode();
+            }, 600);
+        }
+
+        function showQuizForCurrentNode() {
+            gameState = 'QUIZ';
+            const node = mapNodes[currentLevelIndex];
+            
+            // Kemaskini Tajuk Header & Modal
+            document.getElementById('levelTitle').innerText = `${node.name} (Map ${currentLevelIndex + 1}/5)`;
+            document.getElementById('quizNodeName').innerText = `${node.name} - Checkpoint ${currentQuestionInNode + 1}/${totalCheckpointsPerMap}`;
+            document.getElementById('quizQuestionCount').innerText = `Soalan ${questionsInCurrentCheckpoint + 1}/${totalQuestionsPerCheckpoint}`;
+
+            // Hasilkkan Soalan Kuasa Dua / Punca Kuasa Dua
+            currentQuestionObj = generateMathQuestion();
+            document.getElementById('questionText').innerText = currentQuestionObj.question.includes('=') ? currentQuestionObj.question : `${currentQuestionObj.question} = ?`;
+
+            // Papar Pilihan
+            const optsContainer = document.getElementById('optionsContainer');
+            optsContainer.innerHTML = '';
+
+            currentQuestionObj.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "opt-btn py-3.5 px-4 bg-slate-800/90 hover:bg-indigo-600/80 border-2 border-slate-700 hover:border-indigo-400 rounded-2xl text-lg sm:text-2xl font-bold transition-all text-white active:scale-95 shadow-md flex items-center justify-center";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, btn);
+                optsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quizModal').classList.remove('hidden');
+        }
+
+        function checkAnswer(selectedOpt, btnElement) {
+            const isCorrect = selectedOpt === currentQuestionObj.answer;
+
+            // Nyahdayakan semua butang untuk mengelak ketukan berganda
+            document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+
+            if (isCorrect) {
+                playSound('correct');
+                btnElement.className = "opt-btn py-3.5 px-4 bg-emerald-600 border-2 border-emerald-300 rounded-2xl text-lg sm:text-2xl font-bold text-white shadow-lg animate-bounce";
+                score += (selectedDifficulty === 'easy' ? 100 : selectedDifficulty === 'medium' ? 150 : 200);
+                document.getElementById('scoreText').innerText = score;
+
+                setTimeout(() => {
+                    document.getElementById('quizModal').classList.add('hidden');
+                    questionsInCurrentCheckpoint++;
+
+                    // Semak jika sudah menjawab 3 soalan dalam checkpoint semasa
+                    if (questionsInCurrentCheckpoint < totalQuestionsPerCheckpoint) {
+                        // Belum cukup 3 soalan -> terus ke soalan seterusnya dalam checkpoint ini
+                        showQuizForCurrentNode();
+                    } else {
+                        // Sudah cukup 3 soalan untuk checkpoint ini!
+                        questionsInCurrentCheckpoint = 0;
+                        currentQuestionInNode++; // Pindah ke checkpoint seterusnya
+
+                        if (currentQuestionInNode < totalCheckpointsPerMap) {
+                            // Robot bergerak secara animasi ke checkpoint berikutnya di atas map!
+                            moveToNextNode(currentQuestionInNode);
+                        } else {
+                            // Kesemua 4 Checkpoint (12 Soalan) dalam Map ini selesai!
+                            currentQuestionInNode = 0;
+                            showLevelCompleteModal();
+                        }
+                    }
+                }, 1000);
+            } else {
+                playSound('wrong');
+                btnElement.className = "opt-btn py-3.5 px-4 bg-rose-600 border-2 border-rose-300 rounded-2xl text-lg sm:text-2xl font-bold text-white animate-shake";
+                
+                // Tunjukkan jawapan yang betul
+                document.querySelectorAll('.opt-btn').forEach(b => {
+                    if (parseInt(b.innerText) === currentQuestionObj.answer) {
+                        b.className = "opt-btn py-3.5 px-4 bg-emerald-600/70 border-2 border-emerald-400 rounded-2xl text-lg sm:text-2xl font-bold text-white";
+                    }
+                });
+
+                // Penalti nyawa
+                lives--;
+                updateHeartsUI();
+
+                setTimeout(() => {
+                    document.getElementById('quizModal').classList.add('hidden');
+                    if (lives <= 0) {
+                        triggerGameOver();
+                    } else {
+                        // Cuba soalan gantian pada checkpoint yang sama
+                        showQuizForCurrentNode();
+                    }
+                }, 1200);
+            }
+        }
+
+        function showLevelCompleteModal() {
+            playSound('correct');
+            document.getElementById('completedNodeName').innerText = mapNodes[currentLevelIndex].name;
+            document.getElementById('levelCompleteModal').classList.remove('hidden');
+        }
+
+        function continueToNextLevel() {
+            playSound('click');
+            document.getElementById('levelCompleteModal').classList.add('hidden');
+
+            if (currentLevelIndex < mapNodes.length - 1) {
+                // Beralih ke MAP/LEVEL seterusnya dengan animasi latar berbeza!
+                currentLevelIndex++;
+                currentQuestionInNode = 0;
+                questionsInCurrentCheckpoint = 0;
+                
+                // Animasi robot bergerak ke map baharu
+                moveToNextNode(0);
+            } else {
+                // Berjaya Tamatkan Semua Peta (Kemenangan Akhir!)
+                triggerVictory();
+            }
+        }
+
+        function finishJourneyNow() {
+            playSound('click');
+            document.getElementById('levelCompleteModal').classList.add('hidden');
+            triggerVictory();
+        }
+
+        function moveToNextNode(targetSubIdx) {
+            gameState = 'MAP_WALKING';
+            hero.isMoving = true;
+            hero.progress = 0;
+
+            // Dapatkan koordinat sub-checkpoint dalam canvas
+            const currentNodeObj = mapNodes[currentLevelIndex];
+            const startRatioX = currentNodeObj.xRatio;
+            const startRatioY = currentNodeObj.yRatio;
+
+            // Robot bergerak sedikit di sepanjang laluan peta mengikut checkpoint
+            const targetRatioX = startRatioX + (targetSubIdx * 0.04);
+            const targetRatioY = startRatioY + ((targetSubIdx % 2 === 0 ? -1 : 1) * 0.05);
+
+            hero.targetX = targetRatioX * canvas.width;
+            hero.targetY = targetRatioY * canvas.height;
+        }
+
+        function updateHeartsUI() {
+            const container = document.getElementById('heartsContainer');
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                if (i < lives) {
+                    container.innerHTML += '<i class="fa-solid fa-heart"></i>';
+                } else {
+                    container.innerHTML += '<i class="fa-regular fa-heart text-slate-600"></i>';
+                }
+            }
+        }
+
+        /* --- BANTUAN HINT: KALKULATOR & TANYA RAKAN --- */
+        function useCalculatorHint() {
+            playSound('click');
+            document.getElementById('calcModal').classList.remove('hidden');
+        }
+
+        function closeCalculator() {
+            playSound('click');
+            document.getElementById('calcModal').classList.add('hidden');
+        }
+
+        function calcInput(val) {
+            playSound('click');
+            const display = document.getElementById('calcDisplay');
+            if (val === 'C') {
+                display.value = '0';
+            } else if (val === '=') {
+                try {
+                    let expr = display.value.replace(/×/g, '*').replace(/÷/g, '/');
+                    display.value = eval(expr);
+                } catch (e) {
+                    display.value = 'Ralat';
+                }
+            } else if (val === '√') {
+                try {
+                    display.value = Math.sqrt(parseFloat(display.value));
+                } catch (e) {
+                    display.value = 'Ralat';
+                }
+            } else if (val === '^2') {
+                try {
+                    display.value = Math.pow(parseFloat(display.value), 2);
+                } catch (e) {
+                    display.value = 'Ralat';
+                }
+            } else {
+                if (display.value === '0' || display.value === 'Ralat') {
+                    display.value = val;
+                } else {
+                    display.value += val;
+                }
+            }
+        }
+
+        function useAskFriendHint() {
+            if (hintsRemaining <= 0) return;
+            playSound('click');
+            hintsRemaining--;
+            document.getElementById('hintCount').innerText = hintsRemaining;
+
+            if (hintsRemaining === 0) {
+                document.getElementById('btnAskFriend').classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Buang 1 pilihan jawapan yang salah secara automatik
+            const buttons = document.querySelectorAll('.opt-btn');
+            let eliminated = false;
+            buttons.forEach(btn => {
+                if (!eliminated && parseInt(btn.innerText) !== currentQuestionObj.answer) {
+                    btn.disabled = true;
+                    btn.className = "opt-btn py-3.5 px-4 bg-slate-900 border-2 border-slate-800 text-slate-600 rounded-2xl text-lg sm:text-2xl font-bold cursor-not-allowed line-through opacity-40";
+                    eliminated = true;
+                }
+            });
+        }
+
+        /* --- GAMEOVER & VICTORY LOGIC --- */
+        function triggerGameOver() {
+            gameState = 'GAME_OVER';
+            document.getElementById('endGameIcon').className = "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-rose-500/20 text-rose-500 border border-rose-500/40";
+            document.getElementById('endGameIcon').innerHTML = '<i class="fa-solid fa-skull text-4xl"></i>';
+            document.getElementById('endGameTitle').innerText = "PENGEMBARAAN TAMAT";
+            document.getElementById('endGameTitle').className = "text-3xl font-extrabold mb-2 text-rose-500";
+            document.getElementById('endGameDesc').innerText = "Nyawa anda telah habis. Teruskan berusaha dan cuba lagi!";
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('endGameModal').classList.remove('hidden');
+        }
+
+        function triggerVictory() {
+            gameState = 'VICTORY';
+            document.getElementById('endGameIcon').className = "w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 bg-yellow-500/20 text-yellow-400 border border-yellow-500/40 animate-bounce";
+            document.getElementById('endGameIcon').innerHTML = '<i class="fa-solid fa-[#fa-crown] fa-crown text-4xl"></i>';
+            document.getElementById('endGameTitle').innerText = "WIRA MATEMATIK!";
+            document.getElementById('endGameTitle').className = "text-3xl font-extrabold mb-2 text-yellow-400";
+            document.getElementById('endGameDesc').innerText = "Syabas! Anda telah berjaya menakluki kesemua cabaran Kuasa Dua & Punca Kuasa Dua!";
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('endGameModal').classList.remove('hidden');
+        }
+
+        function returnToMainMenu() {
+            playSound('click');
+            document.getElementById('endGameModal').classList.add('hidden');
+            document.getElementById('gameHeader').classList.add('hidden');
+            document.getElementById('mainMenu').classList.remove('hidden');
+            gameState = 'MENU';
+        }
+
+        /* --- ANIMASI RENDER CANVAS & GAMELOOP LATAR BERBEZA --- */
+        let particles = [];
+        for(let i=0; i<30; i++) {
+            particles.push({
+                x: Math.random(),
+                y: Math.random(),
+                radius: Math.random() * 2 + 1,
+                speedY: Math.random() * 0.0005 + 0.0002,
+                opacity: Math.random() * 0.5 + 0.2
+            });
+        }
+
+        function renderMapBackground(bgType, w, h) {
+            // Melukis Tema Latar Belakang Canvas yang Berbeza-beza Mengikut Level / Map
+            if (bgType === 'forest') {
+                // MAP 1: Hutan Lembaran (Hutan Malam Hijau Bersinar)
+                let grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#064e3b');
+                grad.addColorStop(1, '#022c22');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Siluet Pokok Canvas
+                ctx.fillStyle = '#065f46';
+                for(let i=0; i<w; i+=80) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, h);
+                    ctx.lineTo(i + 40, h - 90);
+                    ctx.lineTo(i + 80, h);
+                    ctx.fill();
+                }
+            } else if (bgType === 'cave') {
+                // MAP 2: Gua Nombor (Gua Berbatu Emas Warm Cave)
+                let grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#451a03');
+                grad.addColorStop(1, '#1c1917');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Stalaktit Gua
+                ctx.fillStyle = '#78350f';
+                for(let i=10; i<w; i+=100) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + 30, 80);
+                    ctx.lineTo(i + 60, 0);
+                    ctx.fill();
+                }
+            } else if (bgType === 'river') {
+                // MAP 3: Sungai Formula (Sungai Biru & Ombak)
+                let grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#0c4a6e');
+                grad.addColorStop(1, '#082f49');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Ombak Air
+                ctx.strokeStyle = '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for(let x=0; x<w; x+=20) {
+                    let yWave = h * 0.5 + Math.sin((x + Date.now()/10) * 0.02) * 15;
+                    if(x===0) ctx.moveTo(x, yWave);
+                    else ctx.lineTo(x, yWave);
+                }
+                ctx.stroke();
+            } else if (bgType === 'volcano') {
+                // MAP 4: Gunung Pekali (Atmosfera Gunung Berapi Merah/Merah Jambu)
+                let grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#831843');
+                grad.addColorStop(1, '#4c0519');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Asap & Lava
+                ctx.fillStyle = 'rgba(244, 63, 94, 0.2)';
+                ctx.beginPath();
+                ctx.arc(w*0.8, h*0.2, 100, 0, Math.PI*2);
+                ctx.fill();
+            } else {
+                // MAP 5: Istana Matematik (Dewan Istana Ungu Gemerlap)
+                let grad = ctx.createLinearGradient(0, 0, 0, h);
+                grad.addColorStop(0, '#4c1d95');
+                grad.addColorStop(1, '#2e1065');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+
+                // Tiang Istana
+                ctx.fillStyle = '#6d28d9';
+                ctx.fillRect(40, 0, 30, h);
+                ctx.fillRect(w - 70, 0, 30, h);
+            }
+        }
+
+        function renderMap() {
+            const w = canvas.width;
+            const h = canvas.height;
+
+            // 1. Lukis Latar Belakang Mengikut Theme Map Semasa
+            const currentNode = mapNodes[currentLevelIndex];
+            renderMapBackground(currentNode.bgType, w, h);
+
+            // Lukis Zarah Magis Melayang
+            particles.forEach(p => {
+                p.y -= p.speedY;
+                if(p.y < 0) p.y = 1;
+                ctx.beginPath();
+                ctx.arc(p.x * w, p.y * h, p.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(253, 224, 71, ${p.opacity})`;
+                ctx.fill();
+            });
+
+            // 2. Lukis Laluan Peta Checkpoint 1 -> 4
+            ctx.beginPath();
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.setLineDash([8, 6]);
+            
+            const baseX = currentNode.xRatio * w;
+            const baseY = currentNode.yRatio * h;
+
+            for(let i=0; i<totalCheckpointsPerMap; i++) {
+                let cpX = baseX + (i * 0.08 * w);
+                let cpY = baseY + ((i % 2 === 0 ? -1 : 1) * 0.05 * h);
+                if (i===0) ctx.moveTo(cpX, cpY);
+                else ctx.lineTo(cpX, cpY);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // 3. Lukis Bulatan Checkpoint dalam Map
+            for(let i=0; i<totalCheckpointsPerMap; i++) {
+                let cpX = baseX + (i * 0.08 * w);
+                let cpY = baseY + ((i % 2 === 0 ? -1 : 1) * 0.05 * h);
+                let isPassed = i < currentQuestionInNode;
+                let isCurrentCP = i === currentQuestionInNode;
+
+                if (isCurrentCP) {
+                    ctx.beginPath();
+                    ctx.arc(cpX, cpY, 24, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(250, 204, 21, 0.4)';
+                    ctx.fill();
+                }
+
+                ctx.beginPath();
+                ctx.arc(cpX, cpY, 16, 0, Math.PI * 2);
+                ctx.fillStyle = isPassed ? '#10b981' : isCurrentCP ? '#f59e0b' : '#334155';
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#ffffff';
+                ctx.stroke();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px Fredoka';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(`CP${i+1}`, cpX, cpY);
+            }
+
+            // 4. Pergerakan & Animasi Robot Robby
+            if (hero.isMoving) {
+                hero.progress += hero.speed;
+                
+                let targetCPX = baseX + (currentQuestionInNode * 0.08 * w);
+                let targetCPY = baseY + ((currentQuestionInNode % 2 === 0 ? -1 : 1) * 0.05 * h);
+
+                let prevCPX = baseX + ((currentQuestionInNode - 1) * 0.08 * w);
+                let prevCPY = baseY + (((currentQuestionInNode - 1) % 2 === 0 ? -1 : 1) * 0.05 * h);
+
+                hero.x = prevCPX + (targetCPX - prevCPX) * hero.progress;
+                hero.y = prevCPY + (targetCPY - prevCPY) * hero.progress;
+                hero.bounceOffset = Math.sin(hero.progress * Math.PI * 4) * 10;
+
+                if (hero.progress >= 1) {
+                    hero.progress = 1;
+                    hero.x = targetCPX;
+                    hero.y = targetCPY;
+                    hero.isMoving = false;
+                    hero.bounceOffset = 0;
+
+                    setTimeout(() => {
+                        showQuizForCurrentNode();
+                    }, 400);
+                }
+            } else {
+                hero.x = baseX + (currentQuestionInNode * 0.08 * w);
+                hero.y = baseY + ((currentQuestionInNode % 2 === 0 ? -1 : 1) * 0.05 * h);
+                hero.bounceOffset = Math.sin(Date.now() / 300) * 3;
+            }
+
+            // Lukis Karakter Robot di Atas Peta
+            if (gameState !== 'MENU') {
+                drawRobot(hero.x, hero.y - 25 - hero.bounceOffset);
+            }
+        }
+
+        /* --- LUKIS VECTOR CANVAS KARAKTER ROBOT ROBBY --- */
+        function drawRobot(x, y) {
+            ctx.save();
+            ctx.translate(x, y);
+
+            // Badan Robot
+            ctx.fillStyle = '#3b82f6';
+            ctx.beginPath();
+            ctx.roundRect(-18, -15, 36, 30, 8);
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#60a5fa';
+            ctx.stroke();
+
+            // Kepala Robot
+            ctx.fillStyle = '#60a5fa';
+            ctx.beginPath();
+            ctx.roundRect(-14, -34, 28, 16, 6);
+            ctx.fill();
+
+            // Mata Bersinar (Kuning)
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(-5, -26, 3.5, 0, Math.PI * 2);
+            ctx.arc(5, -26, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Antena Robot
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, -34);
+            ctx.lineTo(0, -42);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, -43, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+
+            // Skrin Dada
+            ctx.fillStyle = '#1e293b';
+            ctx.beginPath();
+            ctx.roundRect(-10, -8, 20, 14, 4);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        /* --- GAMELOOP & RESIZE --- */
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            renderMap();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = function() {
+            resizeCanvas();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
